@@ -606,19 +606,19 @@ class MotorOpenable(object):
 
         def _connect():
             # Run on child greenlet
-            error = None
+            tb = None
             try:
                 args, kwargs = self._delegate_init_args()
                 self.delegate = self.__delegate_class__(*args, **kwargs)
-            except Exception, e:
-                error = e
+            except Exception:
+                tb = sys.exc_info()
 
             if callback:
                 # Schedule callback to be executed on main greenlet, with
                 # (self, None) if no error, else (None, error)
                 self.io_loop.add_callback(
                     functools.partial(
-                        callback, None if error else self, error))
+                        callback, None if tb else self, tb))
 
         # Actually connect on a child greenlet
         gr = greenlet.greenlet(_connect)
