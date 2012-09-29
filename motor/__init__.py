@@ -14,10 +14,14 @@
 
 """Motor, an asynchronous driver for MongoDB and Tornado."""
 
+import sys
+import traceback
+
 import functools
 import socket
 import time
 import warnings
+import collections
 
 # So that 'setup.py doc' can import this module without Tornado or greenlet
 requirements_satisfied = True
@@ -679,7 +683,8 @@ class MotorConnectionBase(MotorOpenable, MotorBase):
             private_loop.close()
 
         if outcome['error']:
-            raise outcome['error']
+            traceback.print_exception(*outcome['error'])
+            sys.exit(1)
 
         return self
 
