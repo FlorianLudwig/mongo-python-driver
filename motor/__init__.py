@@ -16,7 +16,6 @@
 
 import sys
 import traceback
-
 import functools
 import socket
 import time
@@ -200,7 +199,7 @@ class MotorSocket(object):
     def close(self):
         # TODO: examine this, decide if it's correct, and if so explain why
         self.stream.set_close_callback(None)
-        
+
         sock = self.stream.socket
         try:
             try:
@@ -650,19 +649,21 @@ class MotorOpenable(object):
 
         def _connect():
             # Run on child greenlet
-            tb = None
+            error = None
             try:
                 args, kwargs = self._delegate_init_args()
                 self.delegate = self.__delegate_class__(*args, **kwargs)
-            except Exception:
-                tb = sys.exc_info()
+            except Exception, e:
+                print 'Exception while connecting:'
+                traceback.print_exception(*sys.exc_info())
+                error = e
 
             if callback:
                 # Schedule callback to be executed on main greenlet, with
                 # (self, None) if no error, else (None, error)
                 self.io_loop.add_callback(
                     functools.partial(
-                        callback, None if tb else self, tb))
+                        callback, None if error else self, error))
 
         # Actually connect on a child greenlet
         gr = greenlet.greenlet(_connect)
@@ -727,8 +728,7 @@ class MotorClientBase(MotorOpenable, MotorBase):
             private_loop.close()
 
         if outcome['error']:
-            traceback.print_exception(*outcome['error'])
-            sys.exit(1)
+            raise outcome['error']
 
         return self
 
